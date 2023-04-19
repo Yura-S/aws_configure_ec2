@@ -3,7 +3,7 @@ main script is create_ec2.sh
 arguments
 
 1) -c for creating
-   -d for deleting (not working yet)
+   -d for deleting ( -d not working yet)
 
 2) --ami
    enter ami-id
