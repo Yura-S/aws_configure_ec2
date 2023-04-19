@@ -3,7 +3,7 @@ main script is create_ec2.sh
 arguments
 
 1) -c for creating
-   -d for deleting
+   -d for deleting (not working yet)
 
 2) --ami
    enter ami-id
@@ -20,3 +20,11 @@ arguments
    port1:port2:port3:
    
    can add many ports 
+
+only with aws vpcs where CIDR is 10.0.0.0/24
+
+
+
+for cleanup_vpc_by_id.sh give argument - vpc id
+
+for cleanup_vpcs_by_tag.sh give argument - tag 
