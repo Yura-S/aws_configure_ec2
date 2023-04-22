@@ -62,8 +62,8 @@ function create_subnet(){
         echo "created private subnet with $temp_cidr cidr block"
                 if [[ $2 == "pub"  ]]; then
 		sleep 3
-                created_subnet_id=$(aws ec2 describe-subnets --query "Subnets[?CidrBlock=='$temp_cidr'].SubnetId" --output text)
-                aws ec2 modify-subnet-attribute --subnet-id $created_subnet_id --map-public-ip-on-launch
+                subnet_id=$(aws ec2 describe-subnets --query "Subnets[?CidrBlock=='$temp_cidr'].SubnetId" --output text)
+                aws ec2 modify-subnet-attribute --subnet-id $subnet_id --map-public-ip-on-launch
                 echo "changed to public"
                 fi
         break
