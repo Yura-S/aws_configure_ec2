@@ -86,7 +86,7 @@ fi
 #------------------------------if checks passed show that vpc can be deleted
 
 echo ${ALL_VPCS[$i]} CAN BE DELETED. STARTING IN BACKGROUND
-./cleanup_vpc_by_id.sh ${ALL_VPCS[$i]} &
+./utils/cleanup_vpc_by_id.sh ${ALL_VPCS[$i]} &
 
 echo
 done
