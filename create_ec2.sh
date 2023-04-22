@@ -1,7 +1,9 @@
 #!/bin/bash
 
-source ./utils/validation.sh
-source ./utils/creation.sh
+workdir=`pwd`
+
+source $workdir/utils/validation.sh
+source $workdir/utils/creation.sh
 
 function create_vpc() {
   vpc_name=$1
