@@ -21,8 +21,6 @@ arguments
    
    can add many ports 
 
-only with aws vpcs where CIDR is 10.0.0.0/24
-
 
 
 for cleanup_vpc_by_id.sh give argument - vpc id

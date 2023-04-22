@@ -1,91 +1,10 @@
 #!/bin/bash
 
 source ./utils/validation.sh
-
-
-create_sg()
-{       	
-  # $1: argument of ports
-  echo "creating security group"
- sg_ports=`echo "$1" | tr ":" " "` # "10:20:330" -> "10 20 330"
-
- sg_id=$(aws ec2 create-security-group \
-     --group-name acatest \
-     --description "my security group" \
-     --vpc-id $vpc_id \
-     --query 'GroupId' \
-     --output text)
-
-  # todo check this part 
-  if [ -z "$sg_id" ]; then
-    echo "Security group does not exists"
-    exit 1
-  fi
-
- for port in $sg_ports
- do
-   aws ec2 authorize-security-group-ingress \
-            --group-id $sg_id \
-            --protocol tcp \
-            --port $port \
-            --cidr 0.0.0.0/8 \
-            --output text >> /dev/null
-    echo "Allow $port for $sg_id"
-  done
-}
-
-function create_subnet(){
-  # $1 -> priv or pub
-  # $2 -> vpc_id
-  # $3 -> availability-zone
-  echo "creating subnet"
-  
-  if [[ $1 == "priv" ]]; then
-    subnet_id=$(aws ec2 create-subnet \
-        --vpc-id $2 \
-        --cidr-block 10.0.1.0/24 \
-        --availability-zone $3 \
-        --tag-specifications 'ResourceType=subnet,Tags=[{Key=delete,Value=true}]' \
-        --subnet-type private \
-        --map-public-ip-on-launch false)
-  else
-    subnet_id=$(aws ec2 create-subnet \
-      --vpc-id $2 \
-      --cidr-block 10.0.2.0/24 \
-      --availability-zone $3 \
-      --tag-specifications 'ResourceType=subnet,Tags=[{Key=delete,Value=true}]')
-
-  fi
-}
-
-function create_instance(){
-  # $1 -> ami
-  # $2 -> subnet
-  # $3 -> security group
-  echo "creating instance"
-  instance_id=`aws ec2 run-instances \
-	  --image-id $1 \
-	  --count 1 \
-	  --instance-type t2.micro \
-	  --security-group-ids $3 \
-	  --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":8,"VolumeType":"gp2"}}]' \
-	  --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=new_instance}]' \
-	  --subnet-id $2 \
-	  --region us-east-1 \
-	  --query Instances[0].InstanceId \
-	  --output text`
-}
+source ./utils/creation.sh
 
 function validate_all(){
-	echo	
-	#echo gived vpc id $vpc_id
-	#echo gived vpc name $vpc_name
-	#echo gived subnet type $subnet
-	#echo gived subnet id $subnet_id
-	#echo gived security group id $sg_id
-	#echo gived security group ports $sg_ports
-        #echo gived  ami id $ami_id
-	#echo
+	echo
 
 	if [[ ${#vpc_name} -gt 1 ]]; then
 	echo "gived vpc name needs to be created"
@@ -132,8 +51,8 @@ function validate_all(){
                         	if [[ $VPC_ID4 == $vpc_id  ]]; then
                         	#########################################################################
                         	echo "need to create $subnet subnet in $vpc_id then need to create instance"
-				create_subnet subnet $vpc_id us-east-1a
-				create_instance $ami_id $subnet_id $sg_id
+				create_subnet $vpc_id $subnet	
+				create_instance $ami_id $created_subnet_id $sg_id
                         	#########################################################################
                         	else
                         	echo "security group in other vpc"
@@ -141,8 +60,8 @@ function validate_all(){
                         elif [[ ${#sg_ports} -gt 1 ]]; then
                         echo "needs to create security group and subnet and instance in $vpc_id"
 			create_sg $sg_ports
-			create_subnet subnet $vpc_id us-east-1
-			create_instance $ami_id $subnet_id $sg_id
+			create_subnet $vpc_id $subnet
+			create_instance $ami_id $created_subnet_id $sg_id
 			fi		
 		else 
 		echo "incorrect subnet"	
@@ -202,24 +121,3 @@ elif [[ $method = "delete" ]]; then
 else
   echo "Invalid option"
 fi
-
-
-# check subnet argument:
-#   if subnet argument is ID
-#     check sg argument:
-#       if sg argument is ID
-#          compare vpc ID of subnet and sg:
-#            if vpc id is the same, then vpcid
-#            else error
-#       elif sg argument is port
-#          then get vpcid from subnet & create sg in vpcid
-#       else error
-#    elif subnet argument is priv/pub
-#      check sg argument
-#        if sg argument is id
-#          get vpcid from sg & create subnet in vpcid
-#      elif sg argument is port
-#        create vpc & subnet & sg
-#      else error
-#   else error
-# ./vpc.sh --vpc vpc-07c9dc6c837c38285 --subnet subnet-0b0e7a239425dce53 --sg sg-01df59770201c88df
