@@ -7,8 +7,9 @@ echo "NUMBER OF FINDED VPCS WITH THAT TAG AND ITS IS TRUE $ALL_VPCS_COUNT"
 echo
 
 if [ $ALL_VPCS_COUNT -eq 0  ]; then
-	echo NOT FOUND VPCS...STOPPING SCRIPT
-        exit 0
+echo NOT FOUND VPCS...STOPPING SCRIPT
+exit 1
+
 fi
 
 ALL_VPCS=(`aws ec2 describe-vpcs --filters "Name=tag:$1,Values=true" --query Vpcs[].[VpcId] --output text`)
@@ -17,6 +18,7 @@ ALL_VPCS=(`aws ec2 describe-vpcs --filters "Name=tag:$1,Values=true" --query Vpc
 
 for (( i=0; i<$ALL_VPCS_COUNT; i++ ))
 do
+
 echo STARTING CHECK ${ALL_VPCS[$i]}
 
 #------------------------------check for instances tags
@@ -58,37 +60,12 @@ if [ $ALL_SUBNETS_COUNT -ne $SUBNET_COUNT_WITH_TAG ]; then
 	continue
 fi
 
-#------------------------------check for route table tags
-
-ALL_RT_COUNT=$(aws ec2 describe-route-tables --filters Name=vpc-id,Values=${ALL_VPCS[$i]} --query 'RouteTables[?Associations[0].Main != `true`].[RouteTableId]' --output text | wc -l)
-RT_COUNT_WITH_TAG=$(aws ec2 describe-route-tables --filters Name=vpc-id,Values=${ALL_VPCS[$i]} Name=tag:$1,Values=true --query 'RouteTables[?Associations[0].Main != `true`].[RouteTableId]' --output text | wc -l)
-echo ${ALL_VPCS[$i]} HAVE $ALL_RT_COUNT NOT DEFAULT ROUTE TABLES
-echo ${ALL_VPCS[$i]} HAVE $RT_COUNT_WITH_TAG NOT DEFAULT ROUTE TABLES WITH TAG
-
-if [ $ALL_RT_COUNT -ne $RT_COUNT_WITH_TAG ]; then
-        echo ${ALL_VPCS[$i]} HAVE ROUTE TABLE WITHOUT TAG OR TAG IS FALSE. CANT DELETE VPC
-        echo
-        continue
-fi
-
-#------------------------------CHECK INTERNET GATEWAY
-ALL_IGWS=`aws ec2 describe-internet-gateways --filters Name=attachment.vpc-id,Values=${ALL_VPCS[$i]} --query InternetGateways[].[InternetGatewayId] --output text | wc -l`
-IGW_COUNT_WITH_TAG=`aws ec2 describe-internet-gateways --filters Name=attachment.vpc-id,Values=${ALL_VPCS[$i]} Name=tag:$1,Values=true --query InternetGateways[].[InternetGatewayId] --output text | wc -l`
-echo ${ALL_VPCS[$i]} HAVE $ALL_IGWS INTERNET GATEWAYS
-echo ${ALL_VPCS[$i]} HAVE $IGW_COUNT_WITH_TAG INTERNET GATEWAYS WITH TAG
-
-if [ $ALL_IGWS -ne $IGW_COUNT_WITH_TAG ]; then
-        echo ${ALL_VPCS[$i]} HAVE INTERNET GATEWAY WITHOUT TAG OR TAG IS FALSE. CANT DELETE VPC
-        echo
-        continue
-fi
-
 #------------------------------if checks passed show that vpc can be deleted
 
 echo ${ALL_VPCS[$i]} CAN BE DELETED. STARTING IN BACKGROUND
 ./utils/cleanup_vpc_by_id.sh ${ALL_VPCS[$i]} &
 
-echo
+
 done
 
 #------------------------------end of cycle

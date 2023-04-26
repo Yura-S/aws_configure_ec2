@@ -3,7 +3,7 @@ main script is create_ec2.sh
 arguments
 
 1) -c for creating
-   -d for deleting ( -d not working yet)
+   -d for deleting (deletes all vpcs which have to_be_deleted tag and his components have to_be_deleted tag)
 
 2) --ami
    enter ami-id
